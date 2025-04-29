@@ -1,6 +1,6 @@
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
-import { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
 
 import styles from './ArticleParamsForm.module.scss';
 import clsx from 'clsx';
@@ -20,37 +20,60 @@ import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
 
 type TArticleParamsFormProps = {
-	state: ArticleStateType;
-	isOpen: boolean;
-	onStateChange: (newState: ArticleStateType) => void;
-	onArrowClick: () => void;
+	articleSettings: ArticleStateType;
+	onSettingsUpdate: (newState: ArticleStateType) => void;
 };
 
 export const ArticleParamsForm = (props: TArticleParamsFormProps) => {
-	// const [isOpen, setIsOpen] = useState(false);
-	const [tempState, setTempState] = useState(props.state);
+	const [formIsOpen, setFormIsOpen] = useState(false);
+	const [tempArticleSetting, setTempArticleSettings] = useState(
+		props.articleSettings
+	);
+
+	const formRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleEscapePress = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setFormIsOpen(false);
+		};
+
+		const handleClickOutside = (e: MouseEvent) => {
+			if (formRef.current && !formRef.current.contains(e.target as Node)) {
+				setFormIsOpen(false);
+			}
+		};
+
+		if (formIsOpen) {
+			document.addEventListener('keydown', handleEscapePress);
+			document.addEventListener('mousedown', handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener('keydown', handleEscapePress);
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [formIsOpen]);
 
 	const handleSettingsApply = (e: SyntheticEvent) => {
 		e.preventDefault();
-		props.onStateChange(tempState);
+		props.onSettingsUpdate(tempArticleSetting);
 	};
 
 	const handleSettingsReset = () => {
-		setTempState(defaultArticleState);
-		props.onStateChange(defaultArticleState);
+		setTempArticleSettings(defaultArticleState);
+		props.onSettingsUpdate(defaultArticleState);
 	};
 
 	return (
 		<>
 			<ArrowButton
-				isOpen={props.isOpen}
-				onClick={() => {
-					props.onArrowClick();
-				}}
+				isOpen={formIsOpen}
+				onClick={() => setFormIsOpen(!formIsOpen)}
 			/>
 			<aside
+				ref={formRef}
 				className={clsx(styles.container, {
-					[styles.container_open]: props.isOpen,
+					[styles.container_open]: formIsOpen,
 				})}>
 				<form
 					className={styles.form}
@@ -61,44 +84,59 @@ export const ArticleParamsForm = (props: TArticleParamsFormProps) => {
 					</Text>
 					<Select
 						title='шрифт'
-						selected={tempState.fontFamilyOption}
+						selected={tempArticleSetting.fontFamilyOption}
 						options={fontFamilyOptions}
 						onChange={(selected: OptionType) =>
-							setTempState({ ...tempState, fontFamilyOption: selected })
+							setTempArticleSettings({
+								...tempArticleSetting,
+								fontFamilyOption: selected,
+							})
 						}
 					/>
 					<RadioGroup
 						title='размер шрифта'
 						name='font-size'
 						options={fontSizeOptions}
-						selected={tempState.fontSizeOption}
+						selected={tempArticleSetting.fontSizeOption}
 						onChange={(value: OptionType) =>
-							setTempState({ ...tempState, fontSizeOption: value })
+							setTempArticleSettings({
+								...tempArticleSetting,
+								fontSizeOption: value,
+							})
 						}
 					/>
 					<Select
 						title='цвет шрифта'
-						selected={tempState.fontColor}
+						selected={tempArticleSetting.fontColor}
 						options={fontColors}
 						onChange={(selected: OptionType) =>
-							setTempState({ ...tempState, fontColor: selected })
+							setTempArticleSettings({
+								...tempArticleSetting,
+								fontColor: selected,
+							})
 						}
 					/>
 					<Separator />
 					<Select
 						title='цвет фона'
-						selected={tempState.backgroundColor}
+						selected={tempArticleSetting.backgroundColor}
 						options={backgroundColors}
 						onChange={(selected: OptionType) =>
-							setTempState({ ...tempState, backgroundColor: selected })
+							setTempArticleSettings({
+								...tempArticleSetting,
+								backgroundColor: selected,
+							})
 						}
 					/>
 					<Select
 						title='ширина контента'
-						selected={tempState.contentWidth}
+						selected={tempArticleSetting.contentWidth}
 						options={contentWidthArr}
 						onChange={(selected: OptionType) =>
-							setTempState({ ...tempState, contentWidth: selected })
+							setTempArticleSettings({
+								...tempArticleSetting,
+								contentWidth: selected,
+							})
 						}
 					/>
 					<div className={styles.bottomContainer}>
